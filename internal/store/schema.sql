@@ -24,3 +24,6 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs (user_id);
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs (status);

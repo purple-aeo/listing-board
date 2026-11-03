@@ -114,6 +114,29 @@ func (s *Store) ListJobs(ctx context.Context, userID string) ([]board.Job, error
 	return jobs, rows.Err()
 }
 
+func (s *Store) RunningJobs(ctx context.Context) ([]board.Job, error) {
+	rows, err := s.db.QueryContext(ctx, jobSelect+` WHERE status = $1 ORDER BY created_at ASC, id ASC`, board.StatusRunning)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var jobs []board.Job
+	for rows.Next() {
+		job, err := scanJob(rows)
+		if err != nil {
+			return nil, err
+		}
+		jobs = append(jobs, job)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if jobs == nil {
+		jobs = []board.Job{}
+	}
+	return jobs, nil
+}
+
 func (s *Store) CreateJob(ctx context.Context, job board.Job) error {
 	raw, err := json.Marshal(job.Checklist)
 	if err != nil {

@@ -28,5 +28,19 @@ services:
       postgres:
         condition: service_healthy
 
+  worker:
+    build: .
+    command: ["/app/worker"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgres://board:board@postgres:5432/board?sslmode=disable
+      DATA_DIR: /data
+      STEP_PAUSE: 2s
+    volumes:
+      - boarddata:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   boarddata:

@@ -17,9 +17,14 @@ type Account = { id: string; email: string };
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: "include", ...init });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
   if (!res.ok) {
-    const message = data && typeof data.error === "string" ? data.error : res.statusText;
+    const message = data && typeof data.error === "string" ? data.error : text || res.statusText;
     throw new Error(message);
   }
   return data as T;
@@ -48,6 +53,43 @@ export function App() {
       .then(setJobs)
       .catch((err: Error) => setError(err.message));
   }, [me]);
+
+  useEffect(() => {
+    if (!selected || selected.status !== "running") {
+      return;
+    }
+
+    const id = selected.id;
+    let active = true;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const poll = () => {
+      api<Job>(`/api/jobs/${id}`)
+        .then((updated) => {
+          if (!active) return;
+          setSelected((current) => (current?.id === id ? updated : current));
+          setJobs((current) =>
+            current.map((item) => (item.id === id ? updated : item))
+          );
+          if (updated.status !== "running" && timer !== null) {
+            clearInterval(timer);
+          }
+        })
+        .catch(() => {
+          // Ignore transient polling errors
+        });
+    };
+
+    poll();
+    timer = setInterval(poll, 500);
+
+    return () => {
+      active = false;
+      if (timer !== null) {
+        clearInterval(timer);
+      }
+    };
+  }, [selected?.id, selected?.status]);
 
   if (!ready) {
     return <p className="muted">Loading…</p>;

@@ -13,6 +13,16 @@ var (
 	ErrDuplicate = errors.New("duplicate")
 )
 
+const (
+	StatusDraft   = "draft"
+	StatusRunning = "running"
+	StatusSuccess = "success"
+	StatusFailed  = "failed"
+
+	StepStatePending = "pending"
+	StepStateDone    = "done"
+)
+
 type User struct {
 	ID           string
 	Email        string
@@ -40,9 +50,9 @@ type Job struct {
 
 func NewChecklist() []Step {
 	return []Step{
-		{Label: "Reading the brochure", State: "pending"},
-		{Label: "Checking the address", State: "pending"},
-		{Label: "Publishing the sheet", State: "pending"},
+		{Label: "Reading the brochure", State: StepStatePending},
+		{Label: "Checking the address", State: StepStatePending},
+		{Label: "Publishing the sheet", State: StepStatePending},
 	}
 }
 
@@ -73,4 +83,5 @@ type Store interface {
 	CreateJob(ctx context.Context, job Job) error
 	Job(ctx context.Context, id string) (Job, error)
 	UpdateJob(ctx context.Context, job Job) error
+	RunningJobs(ctx context.Context) ([]Job, error)
 }
